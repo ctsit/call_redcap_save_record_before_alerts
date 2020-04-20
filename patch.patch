@@ -1,0 +1,65 @@
+diff --git a/DataEntry/index.php b/DataEntry/index.php
+index 9ff9f9f..579b860 100644
+--- a/DataEntry/index.php
++++ b/DataEntry/index.php
+@@ -356,13 +356,13 @@ if (isset($_POST['submit-action']))
+             $group_id = (empty($Proj->groups)) ? null : Records::getRecordGroupId(PROJECT_ID, $fetched);
+             if (!is_numeric($group_id)) $group_id = null;
+ 
++			// REDCap Hook injection point: Pass project_id and record name to method
++			Hooks::call('redcap_save_record', array(PROJECT_ID, $fetched, $_GET['page'], $_GET['event_id'], $group_id, null, null, $_GET['instance']));
++
+             // Alert
+             $eta = new Alerts();
+             $eta->saveRecordAction(PROJECT_ID, $fetched, $_GET['page'], $_GET['event_id'], $_GET['instance']);
+ 
+-			// REDCap Hook injection point: Pass project_id and record name to method
+-			Hooks::call('redcap_save_record', array(PROJECT_ID, $fetched, $_GET['page'], $_GET['event_id'], $group_id, null, null, $_GET['instance']));
+-
+ 			// SET UP DATA QUALITY RUNS TO RUN IN REAL TIME WITH ANY DATA CHANGES ON FORM
+ 			$dq_error_ruleids = '';
+ 			// Obtain array of all user-defined DQ rules
+diff --git a/ProjectGeneral/form_renderer_functions.php b/ProjectGeneral/form_renderer_functions.php
+index 9badca8..954d2f3 100644
+--- a/ProjectGeneral/form_renderer_functions.php
++++ b/ProjectGeneral/form_renderer_functions.php
+@@ -4367,6 +4367,10 @@ function checkReqFields($fetched, $isSurveyPage=false, $reqmsg_maxlength = 1500)
+ 			Form::serverSideValidation($_POST);
+ 			// Save data (but NOT if previewing a survey)
+ 			list ($fetched, $context_msg, $log_event_id) = saveRecord($fetched, true, true);
++			// REDCap Hook injection point: Pass project_id and record name to method
++			$group_id = (empty($Proj->groups)) ? null : Records::getRecordGroupId(PROJECT_ID, $fetched);
++			if (!is_numeric($group_id)) $group_id = null;
++			Hooks::call('redcap_save_record', array(PROJECT_ID, $fetched, $_GET['page'], $_GET['event_id'], $group_id, ($isSurveyPage ? $_GET['s'] : null), (isset($_POST['__response_id__']) && $isSurveyPage ? $_POST['__response_id__'] : null), $_GET['instance']));
+             // Alert
+             $eta = new Alerts();
+             $eta->saveRecordAction(PROJECT_ID, $fetched, $_GET['page'], $_GET['event_id'], $_GET['instance']);
+@@ -4377,10 +4381,6 @@ function checkReqFields($fetched, $isSurveyPage=false, $reqmsg_maxlength = 1500)
+ 						where response_id = {$_POST['__response_id__']} and first_submit_time is null";
+ 				$q = db_query($sql);
+ 			}
+-			// REDCap Hook injection point: Pass project_id and record name to method
+-			$group_id = (empty($Proj->groups)) ? null : Records::getRecordGroupId(PROJECT_ID, $fetched);
+-			if (!is_numeric($group_id)) $group_id = null;
+-			Hooks::call('redcap_save_record', array(PROJECT_ID, $fetched, $_GET['page'], $_GET['event_id'], $group_id, ($isSurveyPage ? $_GET['s'] : null), (isset($_POST['__response_id__']) && $isSurveyPage ? $_POST['__response_id__'] : null), $_GET['instance']));
+ 			// To prevent having a URL length overflow issue, truncate string after set limit
+ 			if (strlen($__reqmsg) > $reqmsg_maxlength) {
+ 				$__reqmsg = substr($__reqmsg, 0, strpos($__reqmsg, ",", $reqmsg_maxlength)) . ",[more]";
+diff --git a/Surveys/index.php b/Surveys/index.php
+index 6058624..b95fcd4 100644
+--- a/Surveys/index.php
++++ b/Surveys/index.php
+@@ -1286,11 +1286,11 @@ if (isset($_POST['submit-action']))
+ 		saveRecord($fetched);
+         $group_id = (empty($Proj->groups)) ? null : Records::getRecordGroupId(PROJECT_ID, $fetched);
+         if (!is_numeric($group_id)) $group_id = null;
++        // REDCap Hook injection point: Pass project_id and record name to method
++		Hooks::call('redcap_save_record', array(PROJECT_ID, $fetched, $_GET['page'], $_GET['event_id'], $group_id, $_GET['s'], $_POST['__response_id__'], $_GET['instance']));
+         // Event Triggered Alert
+         $eta = new Alerts();
+         $eta->saveRecordAction(PROJECT_ID, $fetched, $_GET['page'], $_GET['event_id'], $_GET['instance'], $_GET['s'], $_POST['__response_id__']);
+-        // REDCap Hook injection point: Pass project_id and record name to method
+-		Hooks::call('redcap_save_record', array(PROJECT_ID, $fetched, $_GET['page'], $_GET['event_id'], $group_id, $_GET['s'], $_POST['__response_id__'], $_GET['instance']));
+ 		// Set hidden edit
+ 		$hidden_edit = 1;
+ 	}
