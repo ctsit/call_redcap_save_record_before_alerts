@@ -1,8 +1,8 @@
 #!/bin/bash
-# deployment script for the change_from_address patch for the ReminderUserAccessDashboardEmail cron job
+# deployment script for the call_redcap_save_record_before_alerts patch
 # Clone the repo that has this file via
 #
-#   git clone git@github.com:ctsit/change_from_address_in_dashboard_reminder.git
+#   git clone git@github.com:ctsit/call_redcap_save_record_before_alerts.git
 #
 # Call this script with two parameters:
 #
@@ -18,5 +18,5 @@ export REDCAP_VERSION=$2
 # determine the directory where this script resides
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-cd $REDCAP_ROOT/redcap_v$REDCAP_VERSION/Classes/
+cd $REDCAP_ROOT/redcap_v$REDCAP_VERSION/
 patch -p1 < $DIR/patch.patch
